@@ -13,8 +13,49 @@ let boundsWidth: CGFloat = 16.0
 let maxHeight: CGFloat = 160
 
 class JxbPhotoView: UIControl, UIScrollViewDelegate {
-
-    //private
+    //MARK: Public
+    //图片数组
+    var photoImages: NSArray?
+    //背景颜色，默认黑色
+    var backColor: UIColor = UIColor.blackColor()
+    //标题（页数）颜色，默认白色
+    var titleColor: UIColor = UIColor.whiteColor()
+    //正文背景颜色，默认黑色，透明度0.3
+    var bodyBack: UIColor = UIColor.init(colorLiteralRed: 0, green: 0, blue: 0, alpha: 0.3)
+    //正文标题颜色，默认白色
+    var bodyTitleColor: UIColor = UIColor.whiteColor()
+    //正文内容颜色，默认白色
+    var bodyContentColor: UIColor = UIColor.whiteColor()
+    //标题（页数）字体，默认20
+    var titleFont: UIFont = UIFont.systemFontOfSize(20)
+    //正文标题字体，默认17
+    var bodyTitleFont: UIFont = UIFont.systemFontOfSize(17)
+    //正文内容字体，默认13
+    var bodyContentFont: UIFont = UIFont.systemFontOfSize(13)
+    
+    
+    //MARK:
+    /**
+     显示图库，必须执行
+     */
+    func showLibrary() {
+        self.backgroundColor = self.backColor
+        self.lblTitle?.textColor = self.titleColor
+        self.scDesTitle?.backgroundColor = self.bodyBack
+        self.scContent?.backgroundColor = self.bodyBack
+        self.lblDesTitle?.textColor = self.bodyTitleColor
+        self.lblDesContent?.textColor = self.bodyContentColor
+        
+        self.lblTitle?.font = self.titleFont
+        self.lblDesTitle?.font = self.bodyTitleFont
+        self.lblDesContent?.font = self.bodyContentFont
+        
+        self.pageNow = 0
+        self.loadImages(self.pageNow!)
+    }
+    
+    
+    //MARK: Private
     private var pageNow: Int?
     private var lblTitle: UILabel?
     private var scrollview: UIScrollView?
@@ -22,25 +63,14 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     private var scMid: UIScrollView?
     private var picMid: UIImageView?
     private var picRight: UIImageView?
-    private var photoImages: NSArray?
+
     private var scDesTitle: UIScrollView?
     private var lblDesTitle: UILabel?
     private var scContent: UIScrollView?
     private var lblDesContent: UILabel?
     private var oriTransform: CGAffineTransform?
     private var lastScale: CGFloat?
-    
-    //public
-    var images: NSArray? {
-        set {
-            self.photoImages = newValue
-            self.imagesSetter()
-        }
-        get {
-            return self.photoImages!
-        }
-    }
-    
+
     //MARK: 初始化
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
@@ -53,8 +83,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 初始化UI
     private func initUI() {
-        self.backgroundColor = UIColor.blackColor()
-        
+
         //Scroll控制器
         self.scrollview = UIScrollView.init(frame: self.frame)
         self.scrollview?.contentSize = CGSizeMake(self.frame.width * 3, self.frame.height)
@@ -67,8 +96,6 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
         //标题，页数
         self.lblTitle = UILabel.init(frame: CGRectMake(0, 20, self.frame.width, 30))
-        self.lblTitle?.textColor = UIColor.whiteColor()
-        self.lblTitle?.font = UIFont.systemFontOfSize(20)
         self.lblTitle?.textAlignment = NSTextAlignment.Center
         self.addSubview(self.lblTitle!)
         
@@ -99,24 +126,18 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
         //标题标签
         self.scDesTitle = UIScrollView.init()
-        self.scDesTitle?.backgroundColor = UIColor.init(colorLiteralRed: 0, green: 0, blue: 0, alpha: 0.3)
         self.addSubview(self.scDesTitle!)
         
         self.lblDesTitle = UILabel.init()
-        self.lblDesTitle?.textColor = UIColor.whiteColor()
-        self.lblDesTitle?.font = UIFont.systemFontOfSize(17)
         self.lblDesTitle?.numberOfLines = 0
         self.lblDesTitle?.lineBreakMode = NSLineBreakMode.ByWordWrapping
         self.scDesTitle?.addSubview(self.lblDesTitle!)
         
         //正文标签
         self.scContent = UIScrollView.init()
-        self.scContent?.backgroundColor = UIColor.init(colorLiteralRed: 0, green: 0, blue: 0, alpha: 0.3)
         self.addSubview(self.scContent!)
         
         self.lblDesContent = UILabel.init()
-        self.lblDesContent?.textColor = UIColor.whiteColor()
-        self.lblDesContent?.font = UIFont.systemFontOfSize(13)
         self.lblDesContent?.numberOfLines = 0
         self.lblDesContent?.lineBreakMode = NSLineBreakMode.ByWordWrapping
         self.scContent?.addSubview(self.lblDesContent!)
@@ -149,12 +170,6 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.scMid?.contentSize = (self.picMid?.frame.size)!
         self.scMid?.contentOffset = CGPointMake((self.scMid!.contentSize.width - (self.scMid?.frame.size.width)!) / 2, 0)
         self.lastScale = x.scale
-    }
-    
-    //MARK: Images的setter
-    private func imagesSetter() {
-        self.pageNow = 0
-        self.loadImages(self.pageNow!)
     }
     
     //MARK: 加载图片
