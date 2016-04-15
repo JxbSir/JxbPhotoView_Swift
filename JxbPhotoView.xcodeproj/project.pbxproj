@@ -88,8 +88,8 @@
 		D0C33D9F1CBF6D5C00064089 /* JxbPhotoView */ = {
 			isa = PBXGroup;
 			children = (
-				D0C33DA01CBF6D9100064089 /* JxbPhotoView.swift */,
 				D0C33DA21CBF718A00064089 /* JxbPhotoItem.swift */,
+				D0C33DA01CBF6D9100064089 /* JxbPhotoView.swift */,
 			);
 			path = JxbPhotoView;
 			sourceTree = "<group>";

@@ -70,6 +70,8 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     private var lblDesContent: UILabel?
     private var oriTransform: CGAffineTransform?
     private var lastScale: CGFloat?
+    
+    private var loadView: UIActivityIndicatorView?
 
     //MARK: 初始化
     required init?(coder aDecoder: NSCoder) {
@@ -83,7 +85,6 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 初始化UI
     private func initUI() {
-
         //Scroll控制器
         self.scrollview = UIScrollView.init(frame: self.frame)
         self.scrollview?.contentSize = CGSizeMake(self.frame.width * 3, self.frame.height)
@@ -108,6 +109,8 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
         //中图的scrollview，用于缩放
         self.scMid = UIScrollView.init(frame: CGRectMake(self.frame.width, 0, self.frame.width, self.frame.height))
+        self.scMid?.showsVerticalScrollIndicator = false
+        self.scMid?.showsHorizontalScrollIndicator = false
         self.scrollview?.addSubview(self.scMid!)
         
         //中图
@@ -142,6 +145,12 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.lblDesContent?.lineBreakMode = NSLineBreakMode.ByWordWrapping
         self.scContent?.addSubview(self.lblDesContent!)
         
+        //菊花
+        self.loadView = UIActivityIndicatorView.init(frame: CGRectMake(0, 0, 32, 32))
+        self.loadView?.center = self.center
+        self.addSubview(self.loadView!)
+        self.loadView?.startAnimating()
+        
         let picRec: UIPinchGestureRecognizer = UIPinchGestureRecognizer.init(target: self, action: #selector(scaleAction))
         self.picMid?.addGestureRecognizer(picRec)
         
@@ -174,6 +183,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 加载图片
     private func loadImages(page: Int) -> Void {
+        weak var wSelf: JxbPhotoView? = self
         self.lblTitle?.text = NSString.init(format: "%d / %d", (page+1), (self.photoImages?.count)!) as String
         //加载左图
         var leftIndex = page - 1
@@ -186,10 +196,15 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.picLeft!.kf_setImageWithResource(resourceLeft)
         
         //加载中图
+        self.loadView?.startAnimating()
+        self.loadView?.hidden = false
         let itemCurrent: JxbPhotoItem = (self.photoImages?.objectAtIndex(page))! as! JxbPhotoItem
         let urlCurrent = NSURL(string: itemCurrent.imageUrl!)!
         let resourceCurrent = Resource(downloadURL: urlCurrent, cacheKey: itemCurrent.imageUrl)
-        self.picMid!.kf_setImageWithResource(resourceCurrent)
+        self.picMid!.kf_setImageWithResource(resourceCurrent,placeholderImage: nil, optionsInfo: nil, progressBlock: nil, completionHandler: {(image: Image?, error: NSError?, cacheType: CacheType, imageURL: NSURL?) -> () in
+            wSelf!.loadView?.stopAnimating()
+            wSelf!.loadView?.hidden = true
+        })
         
         //加载右图
         var rightIndex = page + 1
