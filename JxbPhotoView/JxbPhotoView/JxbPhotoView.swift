@@ -16,15 +16,17 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
 
     //private
     private var pageNow: Int?
+    private var lblTitle: UILabel?
     private var scrollview: UIScrollView?
     private var picLeft: UIImageView?
     private var scMid: UIScrollView?
     private var picMid: UIImageView?
     private var picRight: UIImageView?
     private var photoImages: NSArray?
+    private var scDesTitle: UIScrollView?
+    private var lblDesTitle: UILabel?
     private var scContent: UIScrollView?
-    private var lblTitle: UILabel?
-    private var lblContent: UILabel?
+    private var lblDesContent: UILabel?
     private var oriTransform: CGAffineTransform?
     private var lastScale: CGFloat?
     
@@ -63,6 +65,13 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.scrollview?.delaysContentTouches = false
         self.addSubview(self.scrollview!)
         
+        //标题，页数
+        self.lblTitle = UILabel.init(frame: CGRectMake(0, 20, self.frame.width, 30))
+        self.lblTitle?.textColor = UIColor.whiteColor()
+        self.lblTitle?.font = UIFont.systemFontOfSize(20)
+        self.lblTitle?.textAlignment = NSTextAlignment.Center
+        self.addSubview(self.lblTitle!)
+        
         //左图
         self.picLeft = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
         self.picLeft?.contentMode = UIViewContentMode.ScaleAspectFit
@@ -88,25 +97,29 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.picRight?.multipleTouchEnabled = true
         self.scrollview?.addSubview(self.picRight!)
         
+        //标题标签
+        self.scDesTitle = UIScrollView.init()
+        self.scDesTitle?.backgroundColor = UIColor.init(colorLiteralRed: 0, green: 0, blue: 0, alpha: 0.3)
+        self.addSubview(self.scDesTitle!)
+        
+        self.lblDesTitle = UILabel.init()
+        self.lblDesTitle?.textColor = UIColor.whiteColor()
+        self.lblDesTitle?.font = UIFont.systemFontOfSize(17)
+        self.lblDesTitle?.numberOfLines = 0
+        self.lblDesTitle?.lineBreakMode = NSLineBreakMode.ByWordWrapping
+        self.scDesTitle?.addSubview(self.lblDesTitle!)
+        
+        //正文标签
         self.scContent = UIScrollView.init()
         self.scContent?.backgroundColor = UIColor.init(colorLiteralRed: 0, green: 0, blue: 0, alpha: 0.3)
         self.addSubview(self.scContent!)
         
-        //标题标签
-        self.lblTitle = UILabel.init()
-        self.lblTitle?.textColor = UIColor.whiteColor()
-        self.lblTitle?.font = UIFont.systemFontOfSize(17)
-        self.lblTitle?.numberOfLines = 0
-        self.lblTitle?.lineBreakMode = NSLineBreakMode.ByWordWrapping
-        self.scContent?.addSubview(self.lblTitle!)
-        
-        //正文标签
-        self.lblContent = UILabel.init()
-        self.lblContent?.textColor = UIColor.whiteColor()
-        self.lblContent?.font = UIFont.systemFontOfSize(13)
-        self.lblContent?.numberOfLines = 0
-        self.lblContent?.lineBreakMode = NSLineBreakMode.ByWordWrapping
-        self.scContent?.addSubview(self.lblContent!)
+        self.lblDesContent = UILabel.init()
+        self.lblDesContent?.textColor = UIColor.whiteColor()
+        self.lblDesContent?.font = UIFont.systemFontOfSize(13)
+        self.lblDesContent?.numberOfLines = 0
+        self.lblDesContent?.lineBreakMode = NSLineBreakMode.ByWordWrapping
+        self.scContent?.addSubview(self.lblDesContent!)
         
         let picRec: UIPinchGestureRecognizer = UIPinchGestureRecognizer.init(target: self, action: #selector(scaleAction))
         self.picMid?.addGestureRecognizer(picRec)
@@ -146,6 +159,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 加载图片
     private func loadImages(page: Int) -> Void {
+        self.lblTitle?.text = NSString.init(format: "%d / %d", (page+1), (self.photoImages?.count)!) as String
         //加载左图
         var leftIndex = page - 1
         if leftIndex < 0 {
@@ -173,30 +187,21 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.picRight!.kf_setImageWithResource(resourceRight)
         
         //处理标题与内容
-        self.lblTitle?.text = itemCurrent.title
-        self.lblContent?.text = itemCurrent.content
+        self.lblDesTitle?.text = itemCurrent.title
+        self.lblDesContent?.text = itemCurrent.content
         
         let s: CGSize = CGSizeMake(self.frame.width - boundsWidth*2, 999)
         let option: NSStringDrawingOptions = unsafeBitCast(NSStringDrawingOptions.UsesLineFragmentOrigin.rawValue |
             NSStringDrawingOptions.UsesFontLeading.rawValue | NSStringDrawingOptions.TruncatesLastVisibleLine.rawValue, NSStringDrawingOptions.self)
-        var height: CGFloat = 10.0
-        if itemCurrent.title == nil {
-            self.lblTitle?.hidden = true
-        }
-        else {
-            self.lblTitle?.hidden = false
-            let rTitle: CGRect = NSString(string: itemCurrent.title!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblTitle?.font)!], context: nil)
-            height = height + rTitle.height + 10
-            self.lblTitle?.frame = CGRectMake(boundsWidth, 10, rTitle.width, rTitle.height)
-        }
+        var height: CGFloat = 5
         
         if itemCurrent.content == nil {
-            self.lblContent?.hidden = true
+            self.scContent?.hidden = true
         }
         else {
-            self.lblContent?.hidden = false
-            let rContent: CGRect = NSString(string: itemCurrent.content!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblContent?.font)!], context: nil)
-            self.lblContent?.frame = CGRectMake(boundsWidth, height, rContent.width, rContent.height)
+            self.scContent?.hidden = false
+            let rContent: CGRect = NSString(string: itemCurrent.content!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblDesContent?.font)!], context: nil)
+            self.lblDesContent?.frame = CGRectMake(boundsWidth, height, rContent.width, rContent.height)
             height = height + rContent.height + 10
         }
         
@@ -206,6 +211,16 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
             self.scContent?.frame = CGRectMake(0, self.frame.height - height, self.frame.width, height)
         }
         self.scContent?.contentSize = CGSizeMake(self.frame.width, height)
+        
+        if itemCurrent.title == nil {
+            self.scDesTitle?.hidden = true
+        }
+        else {
+            self.scDesTitle?.hidden = false
+            let rTitle: CGRect = NSString(string: itemCurrent.title!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblDesTitle?.font)!], context: nil)
+            self.lblDesTitle?.frame = CGRectMake(boundsWidth, 5, rTitle.width, rTitle.height)
+            self.scDesTitle?.frame = CGRectMake(0, (self.scContent?.frame.origin.y)! - rTitle.height - 10, self.frame.width, rTitle.height+10)
+        }
         
         self.scrollview?.scrollRectToVisible(CGRectMake(self.frame.width, 0, self.frame.width, self.frame.height), animated: false)
     }
@@ -223,7 +238,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         } else {
             self.picMid?.transform = self.oriTransform!
             self.picMid?.frame.origin.x = 0
-            self.scMid?.contentSize = (self.picMid?.frame.size)!
+            self.scMid?.contentSize = CGSizeMake(self.frame.width, self.frame.height)
             if p == 0 {
                 self.pageNow = self.pageNow! - 1
                 if self.pageNow < 0 {
