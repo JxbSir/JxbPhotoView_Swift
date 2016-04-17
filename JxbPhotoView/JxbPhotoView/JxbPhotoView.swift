@@ -12,8 +12,17 @@ import Kingfisher
 let boundsWidth: CGFloat = 16.0
 let maxHeight: CGFloat = 160
 
-class JxbPhotoView: UIControl, UIScrollViewDelegate {
+//代理
+protocol JxbPhotoDelegate {
+    func changePageIndex(page:Int)
+}
+
+class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
     //MARK: Public
+    //代理设置
+    var delegate : JxbPhotoDelegate?
+    //图片初始Y值，无需设置
+    var origion_Y: CGFloat? = 0
     //图片数组
     var photoImages: NSArray?
     //背景颜色，默认黑色
@@ -217,7 +226,27 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 返回Back
     func backAction() {
-        self.removeFromSuperview()
+        let rootView: UIView = (UIApplication.sharedApplication().delegate?.window??.rootViewController?.view)!
+        
+        let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
+        photo.photoImages = self.photoImages
+        rootView.addSubview(photo)
+        
+        let rect: CGRect = self.frame
+        let img: UIImageView = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
+        img.contentMode = UIViewContentMode.ScaleAspectFit
+        img.image = self.picMid?.image
+        img.frame = rect
+        rootView.addSubview(img)
+        
+        UIView.animateWithDuration(0.35, animations: {
+            self.alpha = 0
+            img.frame = CGRectMake(0, self.origion_Y!, rootView.frame.width, 200)
+        }, completion: {(isFinish:Bool)->Void in
+            self.removeFromSuperview()
+            img.removeFromSuperview()
+        })
+        
     }
     
     //MARK: 图片缩放
@@ -250,6 +279,8 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
         let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
         photo.photoImages = self.photoImages
+        photo.origion_Y = self.frame.origin.y
+        photo.delegate = self
         rootView.addSubview(photo)
         
         let rect: CGRect = self.frame
@@ -269,6 +300,9 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 加载图片
     private func loadImages(page: Int) -> Void {
+        if self.delegate != nil {
+            self.delegate?.changePageIndex(self.pageNow!)
+        }
         weak var wSelf: JxbPhotoView? = self
         self.lblTitle?.text = NSString.init(format: "%d / %d", (page+1), (self.photoImages?.count)!) as String
         self.pageControl?.currentPage = page
@@ -373,4 +407,9 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
     }
     
+    //MARK: JxbPhotoDelegate
+    func changePageIndex(page: Int) {
+        self.pageNow = page
+        self.loadImages(self.pageNow!)
+    }
 }
