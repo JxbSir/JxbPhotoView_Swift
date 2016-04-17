@@ -176,8 +176,9 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         let newTransform: CGAffineTransform = CGAffineTransformScale(curTransform, scale, scale)
         self.picMid?.transform = newTransform
         self.picMid?.frame.origin.x = 0
+        self.picMid?.frame.origin.y = 0
         self.scMid?.contentSize = (self.picMid?.frame.size)!
-        self.scMid?.contentOffset = CGPointMake((self.scMid!.contentSize.width - (self.scMid?.frame.size.width)!) / 2, 0)
+        self.scMid?.contentOffset = CGPointMake((self.scMid!.contentSize.width - (self.scMid?.frame.size.width)!) / 2, (self.scMid!.contentSize.height - (self.scMid?.frame.size.height)!) / 2)
         self.lastScale = x.scale
     }
     
