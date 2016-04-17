@@ -26,6 +26,11 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     var bodyTitleColor: UIColor = UIColor.whiteColor()
     //正文内容颜色，默认白色
     var bodyContentColor: UIColor = UIColor.whiteColor()
+    //pageCotorl当前页颜色
+    var pageCurrentColor: UIColor = UIColor.redColor()
+    //pageCotorl其他页颜色
+    var pageOtherColor: UIColor = UIColor.lightGrayColor()
+
     //标题（页数）字体，默认20
     var titleFont: UIFont = UIFont.systemFontOfSize(20)
     //正文标题字体，默认17
@@ -33,12 +38,12 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     //正文内容字体，默认13
     var bodyContentFont: UIFont = UIFont.systemFontOfSize(13)
     
-    
     //MARK:
     /**
      显示图库，必须执行
      */
-    func showLibrary() {
+    func showLibrary(isAll: Bool?) {
+        self.isAllscreen = isAll
         self.backgroundColor = self.backColor
         self.lblTitle?.textColor = self.titleColor
         self.scDesTitle?.backgroundColor = self.bodyBack
@@ -52,10 +57,21 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         
         self.pageNow = 0
         self.loadImages(self.pageNow!)
+        
+        let width: CGFloat = 20.0 * CGFloat((self.photoImages?.count)!)
+        self.pageControl?.numberOfPages = (self.photoImages?.count)!
+        self.pageControl?.frame = CGRectMake(self.frame.width-width, self.frame.height-20, width, 20)
+        self.pageControl?.currentPageIndicatorTintColor = self.pageCurrentColor
+        self.pageControl?.pageIndicatorTintColor = self.pageOtherColor
+        
+        self.scContent?.hidden = !isAll!
+        self.scDesTitle?.hidden = !isAll!
+        self.lblTitle?.hidden = !isAll!
     }
     
     
     //MARK: Private
+    private var isAllscreen: Bool?
     private var pageNow: Int?
     private var lblTitle: UILabel?
     private var scrollview: UIScrollView?
@@ -72,6 +88,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     private var lastScale: CGFloat?
     
     private var loadView: UIActivityIndicatorView?
+    private var pageControl: UIPageControl?
 
     //MARK: 初始化
     required init?(coder aDecoder: NSCoder) {
@@ -86,11 +103,11 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     //MARK: 初始化UI
     private func initUI() {
         //Scroll控制器
-        self.scrollview = UIScrollView.init(frame: self.frame)
+        self.scrollview = UIScrollView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
         self.scrollview?.contentSize = CGSizeMake(self.frame.width * 3, self.frame.height)
         self.scrollview?.pagingEnabled = true
-        self.scrollview?.showsVerticalScrollIndicator = true
-        self.scrollview?.showsHorizontalScrollIndicator = true
+        self.scrollview?.showsVerticalScrollIndicator = false
+        self.scrollview?.showsHorizontalScrollIndicator = false
         self.scrollview?.delegate = self
         self.scrollview?.delaysContentTouches = false
         self.addSubview(self.scrollview!)
@@ -145,6 +162,11 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.lblDesContent?.lineBreakMode = NSLineBreakMode.ByWordWrapping
         self.scContent?.addSubview(self.lblDesContent!)
         
+        //pageControl
+        self.pageControl = UIPageControl.init()
+        self.pageControl?.currentPage = 0
+        self.addSubview(self.pageControl!)
+        
         //菊花
         self.loadView = UIActivityIndicatorView.init(frame: CGRectMake(0, 0, 32, 32))
         self.loadView?.center = self.center
@@ -186,6 +208,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     private func loadImages(page: Int) -> Void {
         weak var wSelf: JxbPhotoView? = self
         self.lblTitle?.text = NSString.init(format: "%d / %d", (page+1), (self.photoImages?.count)!) as String
+        self.pageControl?.currentPage = page
         //加载左图
         var leftIndex = page - 1
         if leftIndex < 0 {
@@ -230,7 +253,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
             self.scContent?.hidden = true
         }
         else {
-            self.scContent?.hidden = false
+            self.scContent?.hidden = !self.isAllscreen!
             let rContent: CGRect = NSString(string: itemCurrent.content!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblDesContent?.font)!], context: nil)
             self.lblDesContent?.frame = CGRectMake(boundsWidth, height, rContent.width, rContent.height)
             height = height + rContent.height + 10
@@ -247,7 +270,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
             self.scDesTitle?.hidden = true
         }
         else {
-            self.scDesTitle?.hidden = false
+            self.scDesTitle?.hidden = !self.isAllscreen!
             let rTitle: CGRect = NSString(string: itemCurrent.title!).boundingRectWithSize(s, options: option, attributes: [NSFontAttributeName:(self.lblDesTitle?.font)!], context: nil)
             self.lblDesTitle?.frame = CGRectMake(boundsWidth, 5, rTitle.width, rTitle.height)
             self.scDesTitle?.frame = CGRectMake(0, (self.scContent?.frame.origin.y)! - rTitle.height - 10, self.frame.width, rTitle.height+10)
