@@ -13,11 +13,22 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        let b: Bool = false
+    
+        var rect: CGRect = CGRectZero
+        
+        if (b) {
+            rect = self.view.bounds
+        }
+        else {
+            let y: uint = arc4random() % 100 + 50;
+            rect = CGRectMake(0, CGFloat(y), self.view.bounds.width, 200)
+        }
+        
         self.view.backgroundColor = UIColor.redColor()
         
-        let y: uint = arc4random() % 100 + 50;
-        
-        let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, CGFloat(y), self.view.bounds.width, 200))
+   
+        let photo: JxbPhotoView = JxbPhotoView.init(frame: rect)
         self.view.addSubview(photo)
         
         let p1: JxbPhotoItem = JxbPhotoItem()
@@ -36,7 +47,8 @@ class ViewController: UIViewController {
         p3.imageUrl = "http://h.hiphotos.baidu.com/image/pic/item/a2cc7cd98d1001e9460fd63bbd0e7bec54e797d7.jpg"
         
         photo.photoImages = [p1,p2,p3]
-        photo.showLibrary(false)
+        
+        photo.showLibrary(b, page: 0)
     }
 
 }

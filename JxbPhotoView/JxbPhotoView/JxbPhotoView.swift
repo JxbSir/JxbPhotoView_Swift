@@ -41,10 +41,15 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     //MARK:
     /**
      显示图库，必须执行
+     Show Photo Library, must execute at last.
+     
+     - parameter isAll: whether or not All Screen mode, if not, is Banner mode
      */
-    func showLibrary(isAll: Bool?) {
+    func showLibrary(isAll: Bool, page: Int) {
+        self.pageNow = page
         self.isAllscreen = isAll
         self.backgroundColor = self.backColor
+        self.scTitle?.backgroundColor = self.bodyBack
         self.lblTitle?.textColor = self.titleColor
         self.scDesTitle?.backgroundColor = self.bodyBack
         self.scContent?.backgroundColor = self.bodyBack
@@ -55,24 +60,41 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.lblDesTitle?.font = self.bodyTitleFont
         self.lblDesContent?.font = self.bodyContentFont
         
-        self.pageNow = 0
-        self.loadImages(self.pageNow!)
-        
         let width: CGFloat = 20.0 * CGFloat((self.photoImages?.count)!)
+        self.pageControl?.hidden = isAll
         self.pageControl?.numberOfPages = (self.photoImages?.count)!
         self.pageControl?.frame = CGRectMake(self.frame.width-width, self.frame.height-20, width, 20)
         self.pageControl?.currentPageIndicatorTintColor = self.pageCurrentColor
         self.pageControl?.pageIndicatorTintColor = self.pageOtherColor
         
-        self.scContent?.hidden = !isAll!
-        self.scDesTitle?.hidden = !isAll!
-        self.lblTitle?.hidden = !isAll!
+        self.scTitle?.hidden = !isAll
+        self.scContent?.hidden = !isAll
+        self.scDesTitle?.hidden = !isAll
+        self.lblTitle?.hidden = !isAll
+        
+        
+        if (isAll) {
+            let picRec: UIPinchGestureRecognizer = UIPinchGestureRecognizer.init(target: self, action: #selector(scaleAction))
+            self.picMid?.addGestureRecognizer(picRec)
+        }
+        else {
+            let picRec: UITapGestureRecognizer = UITapGestureRecognizer.init(target: self, action: #selector(tapAction))
+            self.picMid?.addGestureRecognizer(picRec)
+        }
+        
+        UIView.animateWithDuration(isAll ? 0.35 : 0, animations: {
+            self.alpha =  1
+        }, completion: {(isFinish:Bool) -> Void in
+            self.loadImages(self.pageNow!)
+        })
+        
     }
     
     
     //MARK: Private
     private var isAllscreen: Bool?
     private var pageNow: Int?
+    private var scTitle: UIScrollView?
     private var lblTitle: UILabel?
     private var scrollview: UIScrollView?
     private var picLeft: UIImageView?
@@ -89,8 +111,13 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     private var loadView: UIActivityIndicatorView?
     private var pageControl: UIPageControl?
+    private var btnBack: UIButton?
 
     //MARK: 初始化
+    deinit {
+        print("JxbPhotoView deinit success.")
+    }
+    
     required init?(coder aDecoder: NSCoder) {
         super.init(coder: aDecoder)
     }
@@ -102,6 +129,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
     
     //MARK: 初始化UI
     private func initUI() {
+        self.alpha = 0
         //Scroll控制器
         self.scrollview = UIScrollView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
         self.scrollview?.contentSize = CGSizeMake(self.frame.width * 3, self.frame.height)
@@ -112,10 +140,20 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.scrollview?.delaysContentTouches = false
         self.addSubview(self.scrollview!)
         
+        //标题背景栏
+        self.scTitle = UIScrollView.init(frame: CGRectMake(0, 0, self.frame.width, 66))
+        self.addSubview(self.scTitle!)
+        
         //标题，页数
         self.lblTitle = UILabel.init(frame: CGRectMake(0, 20, self.frame.width, 30))
         self.lblTitle?.textAlignment = NSTextAlignment.Center
-        self.addSubview(self.lblTitle!)
+        self.scTitle?.addSubview(self.lblTitle!)
+        
+        //返回按钮
+        self.btnBack = UIButton.init(frame: CGRectMake(10, 20, 32, 32))
+        self.btnBack?.setImage(UIImage.init(named: "icon_back"), forState: UIControlState.Normal)
+        self.btnBack?.addTarget(self, action: #selector(backAction), forControlEvents: UIControlEvents.TouchUpInside)
+        self.scTitle?.addSubview(self.btnBack!)
         
         //左图
         self.picLeft = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
@@ -173,10 +211,13 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.addSubview(self.loadView!)
         self.loadView?.startAnimating()
         
-        let picRec: UIPinchGestureRecognizer = UIPinchGestureRecognizer.init(target: self, action: #selector(scaleAction))
-        self.picMid?.addGestureRecognizer(picRec)
-        
+        //初始大小
         self.oriTransform = self.picMid?.transform
+    }
+    
+    //MARK: 返回Back
+    func backAction() {
+        self.removeFromSuperview()
     }
     
     //MARK: 图片缩放
@@ -202,6 +243,28 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate {
         self.scMid?.contentSize = (self.picMid?.frame.size)!
         self.scMid?.contentOffset = CGPointMake((self.scMid!.contentSize.width - (self.scMid?.frame.size.width)!) / 2, (self.scMid!.contentSize.height - (self.scMid?.frame.size.height)!) / 2)
         self.lastScale = x.scale
+    }
+    
+    func tapAction(x:UIPinchGestureRecognizer) -> Void {
+        let rootView: UIView = (UIApplication.sharedApplication().delegate?.window??.rootViewController?.view)!
+        
+        let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
+        photo.photoImages = self.photoImages
+        rootView.addSubview(photo)
+        
+        let rect: CGRect = self.frame
+        let img: UIImageView = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
+        img.contentMode = UIViewContentMode.ScaleAspectFit
+        img.image = self.picMid?.image
+        img.frame = rect
+        rootView.addSubview(img)
+
+        UIView.animateWithDuration(0.35, animations: {
+            photo.showLibrary(true, page: self.pageNow!)
+            img.frame = CGRectMake(0, 0, rootView.frame.width, rootView.frame.height)
+        }, completion: {(isFinish:Bool) -> Void in
+            img.removeFromSuperview()
+        })
     }
     
     //MARK: 加载图片
