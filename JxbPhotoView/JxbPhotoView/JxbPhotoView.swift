@@ -389,6 +389,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
         } else {
             self.picMid?.transform = self.oriTransform!
             self.picMid?.frame.origin.x = 0
+            self.picMid?.frame.origin.y = 0
             self.scMid?.contentSize = CGSizeMake(self.frame.width, self.frame.height)
             if p == 0 {
                 self.pageNow = self.pageNow! - 1
