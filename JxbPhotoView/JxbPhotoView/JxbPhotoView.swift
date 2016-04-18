@@ -266,9 +266,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
         let scale: CGFloat = 1.0 - (self.lastScale! - x.scale)
         let curTransform: CGAffineTransform = (self.picMid?.transform)!
         let newTransform: CGAffineTransform = CGAffineTransformScale(curTransform, scale, scale)
-        self.picMid?.transform = newTransform
-        self.picMid?.frame.origin.x = 0
-        self.picMid?.frame.origin.y = 0
+        self.setMidPicFrame(newTransform)
         self.scMid?.contentSize = (self.picMid?.frame.size)!
         self.scMid?.contentOffset = CGPointMake((self.scMid!.contentSize.width - (self.scMid?.frame.size.width)!) / 2, (self.scMid!.contentSize.height - (self.scMid?.frame.size.height)!) / 2)
         self.lastScale = x.scale
@@ -296,6 +294,12 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
         }, completion: {(isFinish:Bool) -> Void in
             img.removeFromSuperview()
         })
+    }
+    
+    private func setMidPicFrame(transform: CGAffineTransform) {
+        self.picMid?.transform = transform
+        self.picMid?.frame.origin.x = 0
+        self.picMid?.frame.origin.y = 0
     }
     
     //MARK: 加载图片
@@ -387,9 +391,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
         if p == 1 {
             //do nothing
         } else {
-            self.picMid?.transform = self.oriTransform!
-            self.picMid?.frame.origin.x = 0
-            self.picMid?.frame.origin.y = 0
+            self.setMidPicFrame(self.oriTransform!)
             self.scMid?.contentSize = CGSizeMake(self.frame.width, self.frame.height)
             if p == 0 {
                 self.pageNow = self.pageNow! - 1
