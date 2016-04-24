@@ -262,6 +262,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
                     wSelf.picMid?.transform = wSelf.oriTransform!
                 })
             }
+            return;
         }
         let scale: CGFloat = 1.0 - (self.lastScale! - x.scale)
         let curTransform: CGAffineTransform = (self.picMid?.transform)!
