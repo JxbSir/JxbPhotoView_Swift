@@ -22,7 +22,7 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
     //代理设置
     var delegate : JxbPhotoDelegate?
     //图片初始Y值，无需设置
-    var origion_Y: CGFloat? = 0
+    var origionFrame: CGRect = CGRectZero
     //图片数组
     var photoImages: NSArray?
     //背景颜色，默认黑色
@@ -227,26 +227,18 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
     //MARK: 返回Back
     func backAction() {
         let rootView: UIView = (UIApplication.sharedApplication().delegate?.window??.rootViewController?.view)!
-        
-        let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
-        photo.photoImages = self.photoImages
-        rootView.addSubview(photo)
-        
-        let rect: CGRect = self.frame
-        let img: UIImageView = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
+        let img: UIImageView = UIImageView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
         img.contentMode = UIViewContentMode.ScaleAspectFit
         img.image = self.picMid?.image
-        img.frame = rect
         rootView.addSubview(img)
-        
         UIView.animateWithDuration(0.35, animations: {
             self.alpha = 0
-            img.frame = CGRectMake(0, self.origion_Y!, rootView.frame.width, 200)
-        }, completion: {(isFinish:Bool)->Void in
-            self.removeFromSuperview()
-            img.removeFromSuperview()
+            img.frame = self.origionFrame
+            }, completion: {(isfinish:Bool) -> Void in
+                img.removeFromSuperview()
+                self.removeFromSuperview()
+                self.alpha = 1
         })
-        
     }
     
     //MARK: 图片缩放
@@ -276,11 +268,10 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
     func tapAction(x:UIPinchGestureRecognizer) -> Void {
         let rootView: UIView = (UIApplication.sharedApplication().delegate?.window??.rootViewController?.view)!
         
-        let photo: JxbPhotoView = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
-        photo.photoImages = self.photoImages
-        photo.origion_Y = self.frame.origin.y
-        photo.delegate = self
-        rootView.addSubview(photo)
+        let photo: JxbPhotoView? = JxbPhotoView.init(frame: CGRectMake(0, 0, rootView.frame.width, rootView.frame.height))
+        photo!.photoImages = self.photoImages
+        photo!.delegate = self
+        rootView.addSubview(photo!)
         
         let rect: CGRect = self.frame
         let img: UIImageView = UIImageView.init(frame: CGRectMake(0, 0, self.frame.width, self.frame.height))
@@ -288,12 +279,35 @@ class JxbPhotoView: UIControl, UIScrollViewDelegate,JxbPhotoDelegate {
         img.image = self.picMid?.image
         img.frame = rect
         rootView.addSubview(img)
-
+        
+        var yyy: CGFloat = self.frame.origin.y
+        var superView: UIView? = self.superview
+        repeat {
+            if (superView == nil) {
+                break;
+            }
+            yyy += (superView?.frame.origin.y)!
+            let b: Bool = (superView?.isKindOfClass(UIScrollView))!
+            if (b) {
+                let sc: UIScrollView = superView as! UIScrollView
+                yyy -= sc.contentOffset.y
+            }
+            
+            superView = superView?.superview
+        } while (superview != nil)
+        
+        var r: CGRect = img.frame
+        r.origin.y = yyy
+        img.frame = r
+        
+        photo!.origionFrame = r
+        
+        weak var wSelf: JxbPhotoView? = self
         UIView.animateWithDuration(0.35, animations: {
-            photo.showLibrary(true, page: self.pageNow!)
+            photo!.showLibrary(true, page: wSelf!.pageNow!)
             img.frame = CGRectMake(0, 0, rootView.frame.width, rootView.frame.height)
-        }, completion: {(isFinish:Bool) -> Void in
-            img.removeFromSuperview()
+            }, completion: {(isFinish:Bool) -> Void in
+                img.removeFromSuperview()
         })
     }
     
